@@ -48,7 +48,6 @@ app.get('/messages', (req, res) => {
 		inner join user u
 		on cm.id_sender = u.id
 		where cm.room_id = ${req.query.room_id}
-		group by cm.id
 		ORDER BY cm.created_at DESC`, function (err, result, fields) {
 				if (err) throw err;
 				res.status(200).send(result);
