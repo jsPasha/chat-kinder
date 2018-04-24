@@ -2,10 +2,10 @@ const mysql = require('mysql');
 
 var pool = mysql.createPool({
 	connectionLimit: 10,
-	host: 'localhost',
-	user: 'root',
-	password: '',
-	database: 'kinder'
+	host: 'by.ua',
+	user: 'u_kinderklH',
+	password: 'yRZYREa9TbwG',
+	database: 'kinderklinik_chat'
 });
 
 module.exports = { pool };

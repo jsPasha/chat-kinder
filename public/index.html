@@ -75,6 +75,8 @@
 			});
 
 			$('body').on('click', '.room_item', function () {
+
+				$('#messages').css('visibility', 'visible');
 				$('#messages_body').empty();
 
 				var activeDay;
@@ -103,7 +105,6 @@
 						activeDay = currDay;
 						scrollToBottom();
 					});
-
 				}).catch(function (error) {
 					console.log(error);
 				});
@@ -111,12 +112,13 @@
 
 			$('#messages_form_self').submit(function (e) {
 				e.preventDefault();
-
 				socket.emit('createMessage', {
 					text: $('#message').val(),
 					room: activeRoom,
 					id_sender: userId
 				});
+
+				this.reset();
 
 			});
 

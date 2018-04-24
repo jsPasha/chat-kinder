@@ -32,7 +32,8 @@ ul {
 	justify-content: space-between;
 	margin: 10px;
 	background-color: #fff;
-	flex-grow: .5;
+	flex-grow: .5;	
+	visibility: hidden;
 }
 #messages_form {
 	background-color: #8B4513;
