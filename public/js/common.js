@@ -26,6 +26,7 @@ $(function () {
 
 	socket.on('newMessage', function (data) {
 		var html = generateMessage(data);
+		console.log(data)
 		if (data.timestamp) $('.temp-'+data.timestamp).remove();
 		$('#messages_body').append(html);
 		scrollToBottom();
@@ -107,7 +108,7 @@ $(function () {
 				}
 			},
 			text: data.text,
-			sender: data.username,
+			sender: data.username || userName,
 			time: moment(data.created_at).format('h:mm a'),
 			position: data.id_sender === userId ? 'right my_message' : 'left'
 		});
