@@ -19,7 +19,7 @@
 			<ul id="messages_body"></ul>
 			<div id="messages_form">
 				<form id="messages_form_self" action="">
-					<input type="text" id="message" placeholder="message" />
+					<input type="text" id="message" placeholder="message" autocomplete="off"/>
 					<button type="submit">Send</button>
 				</form>
 			</div>
@@ -98,11 +98,7 @@
 						var html = generateMessage(el);
 
 						$('#messages_body').prepend(html);
-						var currDay = moment(el.created_at).format('dddd, LL');
-						if (currDay != activeDay && activeDay !== undefined) {
-							$('#messages_body').prepend('<p class="line">' + currDay + '</p>');
-						}
-						activeDay = currDay;
+					
 						scrollToBottom();
 					});
 				}).catch(function (error) {
@@ -128,7 +124,7 @@
 				return Mustache.render(template, {
 					text: data.text,
 					sender: data.username,
-					time: moment(data.created_at).format('h:mm'),
+					time: moment(data.created_at).format('h:mm a'),
 					position: data.id_sender === userId ? 'right my_message' : 'left'
 				});
 			}

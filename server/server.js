@@ -7,7 +7,8 @@ const path = require('path');
 const http = require('http');
 
 const publicPath = path.join(__dirname, '../public');
-const port = process.env.PORT || 3000;
+const port = process
+.env.PORT || 3000;
 
 const { saveMessage } = require('./utils/message')
 const { getUserName } = require('./utils/user.js')
@@ -31,7 +32,7 @@ app.get('/rooms', (req, res) => {
 		LEFT JOIN chat_room_user cru
 		ON cr.id = cru.id_room
 		WHERE cru.id_user = ${req.query.user_id}`, function (err, result, fields) {
-				if (err) throw err;
+				if (err) return console.log(err);
 				res.status(200).send(result);
 				connection.release();
 			});
@@ -49,7 +50,7 @@ app.get('/messages', (req, res) => {
 		on cm.id_sender = u.id
 		where cm.room_id = ${req.query.room_id}
 		ORDER BY cm.created_at DESC`, function (err, result, fields) {
-				if (err) throw err;
+				if (err) return console.log(err);
 				res.status(200).send(result);
 				connection.release();
 			});
@@ -79,7 +80,7 @@ io.on('connection', (socket) => {
 			});
 
 		});
-
+		
 	});
 
 	socket.on('joinRoom', (data) => {
