@@ -70,8 +70,6 @@ ul {
 	margin: 5px 0;
 }
 .message_item div img {
-	max-width: 100%;
-	width: 300px;
 	border-radius: 5px;
 }
 .message_item > div {
