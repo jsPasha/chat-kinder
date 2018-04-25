@@ -1,8 +1,12 @@
 const express = require('express');
 const socketIO = require('socket.io');
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
+
 const { pool } = require('./db/db');
-const fs = require('fs');
+const { logEvent } = require('./utils/logs');
+const { saveFile } = require('./utils/files');
+const { getUserName } = require('./utils/user');
 
 const path = require('path');
 const http = require('http');
@@ -12,7 +16,6 @@ const port = process
 	.env.PORT || 3000;
 
 const { saveMessage } = require('./utils/message')
-const { getUserName } = require('./utils/user.js')
 
 var app = express();
 
@@ -24,21 +27,48 @@ app.use(express.static(publicPath));
 
 app.use(bodyParser.json());
 
+app.use(fileUpload());
+
+app.post('/upload', function (req, res) {
+
+	if (!req.files) return res.status(400).send('No files were uploaded.');
+
+	let image = req.files.image;
+
+	saveFile(image, publicPath, '/img/uploads/', req.body.room_id, req.body.id_sender, (filePath, err) => {
+
+		if (err) return res.status(500).send(err);
+
+		res.send(filePath);
+
+	});
+
+});
+
 app.get('/rooms', (req, res) => {
 
 	pool.getConnection(function (err, connection) {
 
+		var userId = req.query.user_id || 0; 
+		
 		connection.query(`SELECT cr.id, cr.name
 		FROM chat_rooms cr
 		LEFT JOIN chat_room_user cru
 		ON cr.id = cru.id_room
-		WHERE cru.id_user = ${req.query.user_id}`, function (err, result, fields) {
+		WHERE cru.id_user = ${userId}`, function (err, result, fields) {
+
 				if (err) {
+					logEvent(`QUERY ERROR: Rooms for user "${userId}" was not selected`);
+					connection.release();
 					return console.log(err);
 				}
-				res.status(200).send(result);
-				connection.release();
 				
+				getUserName(userId, (username) => {
+					res.status(200).send({username, result});
+				});
+
+				connection.release();
+
 			});
 	});
 
@@ -48,13 +78,17 @@ app.get('/messages', (req, res) => {
 
 	pool.getConnection(function (err, connection) {
 
-		connection.query(`SELECT cm.created_at, cm.text, cm.id_sender, u.username
+		connection.query(`SELECT cm.created_at, cm.text, cm.id_sender, cm.type, u.username
 		from chat_messages cm
 		inner join user u
 		on cm.id_sender = u.id
 		where cm.room_id = ${req.query.room_id}
 		ORDER BY cm.created_at DESC`, function (err, result, fields) {
-				if (err) return console.log(err);
+				if (err) {
+					logEvent(`QUERY ERROR: Messages from room "${req.query.room_id}" was not selected`);
+					connection.release();
+					return console.log(err);
+				}
 				res.status(200).send(result);
 				connection.release();
 			});
@@ -63,28 +97,15 @@ app.get('/messages', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+
 	console.log('Socket IO: Connected');
 
 	socket.emit()
 
 	socket.on('createMessage', (message) => {
-		var messageData;
-		var username;
-
 		saveMessage(message, (data) => {
-
-			messageData = data;
-
-			getUserName(message.id_sender, (name) => {
-
-				messageData.username = name;
-
-				io.to(message.room).emit('newMessage', messageData);
-
-			});
-
+			io.to(message.room).emit('newMessage', message);
 		});
-
 	});
 
 	socket.on('joinRoom', (data) => {

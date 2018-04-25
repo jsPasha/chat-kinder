@@ -18,8 +18,11 @@
 		<div id="messages">
 			<ul id="messages_body"></ul>
 			<div id="messages_form">
+
 				<form id="messages_form_self" action="">
-					<input type="text" id="message" placeholder="message" autocomplete="off"/>
+					<input hidden id="loadImageInput" type="file" name="sampleFile" />
+					<img width="40" height="40" src="/img/frame-landscape.svg" onclick="loadImageInput.click();" alt="">
+					<input type="text" id="message" placeholder="message" autocomplete="off" />
 					<button type="submit">Send</button>
 				</form>
 			</div>
@@ -30,123 +33,35 @@
 		<li data-id={{id}} class="room_item">{{name}}</li>
 	</script>
 
+	<script id="message_temp_template" type="text/template">
+		<li class="message_item temp-{{timestamp}} {{position}}">
+			<div>
+				<p><b>{{sender}}</b></p>
+				<div>
+					<div class="image_message_body">
+							<svg width="100px"  height="100px"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-pacman" style="background: none;"><g ng-attr-style="display:{{config.showBean}}" style="display:block"><circle cx="44.8" cy="50" r="4" ng-attr-fill="{{config.c2}}" fill="#000000"><animate attributeName="cx" calcMode="linear" values="95;35" keyTimes="0;1" dur="1" begin="-0.67s" repeatCount="indefinite"></animate><animate attributeName="fill-opacity" calcMode="linear" values="0;1;1" keyTimes="0;0.2;1" dur="1" begin="-0.67s" repeatCount="indefinite"></animate></circle><circle cx="65.2" cy="50" r="4" ng-attr-fill="{{config.c2}}" fill="#000000"><animate attributeName="cx" calcMode="linear" values="95;35" keyTimes="0;1" dur="1" begin="-0.33s" repeatCount="indefinite"></animate><animate attributeName="fill-opacity" calcMode="linear" values="0;1;1" keyTimes="0;0.2;1" dur="1" begin="-0.33s" repeatCount="indefinite"></animate></circle><circle cx="85" cy="50" r="4" ng-attr-fill="{{config.c2}}" fill="#000000"><animate attributeName="cx" calcMode="linear" values="95;35" keyTimes="0;1" dur="1" begin="0s" repeatCount="indefinite"></animate><animate attributeName="fill-opacity" calcMode="linear" values="0;1;1" keyTimes="0;0.2;1" dur="1" begin="0s" repeatCount="indefinite"></animate></circle></g><g ng-attr-transform="translate({{config.showBeanOffset}} 0)" transform="translate(-15 0)"><path d="M50 50L20 50A30 30 0 0 0 80 50Z" ng-attr-fill="{{config.c1}}" fill="#000000" transform="rotate(15 50 50)"><animateTransform attributeName="transform" type="rotate" calcMode="linear" values="0 50 50;45 50 50;0 50 50" keyTimes="0;0.5;1" dur="1s" begin="0s" repeatCount="indefinite"></animateTransform></path><path d="M50 50L20 50A30 30 0 0 1 80 50Z" ng-attr-fill="{{config.c1}}" fill="#000000" transform="rotate(-15 50 50)"><animateTransform attributeName="transform" type="rotate" calcMode="linear" values="0 50 50;-45 50 50;0 50 50" keyTimes="0;0.5;1" dur="1s" begin="0s" repeatCount="indefinite"></animateTransform></path></g></svg>
+						
+					</div>
+				</div>
+			</div>
+		</li>
+	</script>
+
 	<script id="message_template" type="text/template">
 		<li class="message_item {{position}}">
 			<div>
-				<b>{{sender}}:</b> {{text}} <i>{{time}}</i>
+				<p><b>{{sender}}</b> <i>{{time}}</i></p>
+				<div>{{#type}}{{text}}{{/type}}</div>
 			</div>
 		</li>
 	</script>
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
-	<script src="/js/axios.min.js"></script>
-	<script src="/js/mustache.js"></script>
-	<script src="/js/moment.js"></script>
-	<script>
-
-		var userId = prompt('Enter id: \n Pavlo: 1 \n Igor: 2 \n Jenya: 3');
-
-		axios.get('/rooms', {
-			params: {
-				user_id: userId
-			}
-		}).then(function (response) {
-			response.data.forEach(function (el) {
-				var template = $('#room_template').html();
-				var html = Mustache.render(template, {
-					name: el.name,
-					id: el.id
-				});
-				$('#rooms').append(html);
-			})
-		}).catch(function (error) {
-			console.log(error);
-		});
-
-		$(function () {
-			var socket = io();
-			var activeRoom = false;
-
-			socket.on('newMessage', function (data) {
-				var html = generateMessage(data);
-				$('#messages_body').append(html);
-				scrollToBottom();
-			});
-
-			$('body').on('click', '.room_item', function () {
-
-				$('#messages').css('visibility', 'visible');
-				$('#messages_body').empty();
-
-				var activeDay;
-				var id = this.dataset.id;
-
-				socket.emit('joinRoom', {
-					prevRoom: activeRoom,
-					room: id
-				});
-
-				activeRoom = id;
-
-				axios.get('/messages', {
-					params: {
-						room_id: id
-					}
-				}).then(function (response) {
-					response.data.forEach(function (el) {
-						var html = generateMessage(el);
-
-						$('#messages_body').prepend(html);
-					
-						scrollToBottom();
-					});
-				}).catch(function (error) {
-					console.log(error);
-				});
-			});
-
-			$('#messages_form_self').submit(function (e) {
-				e.preventDefault();
-				socket.emit('createMessage', {
-					text: $('#message').val(),
-					room: activeRoom,
-					id_sender: userId
-				});
-
-				this.reset();
-
-			});
-
-			function generateMessage(data) {
-				var template = $('#message_template').html();
-				// console.log(data)
-				return Mustache.render(template, {
-					text: data.text,
-					sender: data.username,
-					time: moment(data.created_at).format('h:mm a'),
-					position: data.id_sender === userId ? 'right my_message' : 'left'
-				});
-			}
-
-			function scrollToBottom() {
-				var messages = $('#messages_body');
-				var newMessage = messages.children('li:last-child');
-				var clientHeight = messages.prop('clientHeight');
-				var scrollTop = messages.prop('scrollTop');
-				var scrollHeight = messages.prop('scrollHeight');
-				var newMessageHeight = newMessage.innerHeight();
-				var lastMessageHeight = newMessage.prev().innerHeight();
-
-				if (clientHeight + scrollTop + newMessageHeight + lastMessageHeight >= scrollHeight) {
-					messages.scrollTop(scrollHeight);
-				}
-
-			}
-
-		});
-
-	</script>
+	<script src="/js/libs/axios.min.js"></script>
+	<script src="/js/libs/mustache.js"></script>
+	<script src="/js/libs/moment.js"></script>
+	<script src="/js/common.js"></script>
 
 </body>
 

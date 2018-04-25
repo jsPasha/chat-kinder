@@ -32,7 +32,7 @@ ul {
 	justify-content: space-between;
 	margin: 10px;
 	background-color: #fff;
-	flex-grow: .5;	
+	flex-grow: 1;	
 	visibility: hidden;
 }
 #messages_form {
@@ -46,6 +46,11 @@ ul {
 #messages_form form{
 	display: flex;
 	justify-content: space-between;
+}
+#messages_form form img {
+	width: 40px;
+	cursor: pointer;
+	margin-right: 15px;
 }
 #messages_form form input {
 	flex-grow: 1;
@@ -61,15 +66,44 @@ ul {
 .message_item {
 	margin: 10px;
 }
-.message_item div {
+.message_item p {
+	margin: 5px 0;
+}
+.message_item div img {
+	max-width: 100%;
+	width: 300px;
+	border-radius: 5px;
+}
+.message_item > div {
 	display: inline-block;
 	text-align: left;
-	min-width: 150px;
-	padding: 10px 15px;
+	min-width: 250px;
+	max-width: 60%;
+	padding: 5px 15px;
 	box-sizing: border-box;
 	border-radius: 5px;
 	background-color: lightgreen;
 }
 .message_item.my_message div {
 	background-color: lightblue;
+}
+.image_message_body {
+	height: 250px;
+	width: 250px;
+	overflow: hidden;
+	position: relative;
+	margin: 5px 0;
+}
+.image_message_body img, .image_message_body svg {
+	position: absolute;
+	left: 50%;
+	top: 0;
+	transform: translateX(-50%);
+	height: 100%;
+	width: auto;
+}
+
+.image_message_body svg {
+	transform: translate(-50%, -50%);
+	top: 50%;
 }
