@@ -107,7 +107,7 @@ $(function () {
 				}
 			},
 			text: data.text,
-			sender: userName,
+			sender: data.username,
 			time: moment(data.created_at).format('h:mm a'),
 			position: data.id_sender === userId ? 'right my_message' : 'left'
 		});
