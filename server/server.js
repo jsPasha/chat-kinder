@@ -50,8 +50,6 @@ app.get('/rooms', (req, res) => {
 
 	pool.getConnection(function (err, connection) {
 
-		res.send('hello!')
-
 		var userId = req.query.user_id || 0;
 
 		connection.query(`SELECT cr.id, cr.name
