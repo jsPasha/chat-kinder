@@ -13,14 +13,12 @@ class videoUploader {
 		this.videoName = undefined;
 	}
 
-	startVideo (data, publicPath, socket, io, uniqIdForOneLoading) {
+	startVideo(data, publicPath, socket, io, uniqIdForOneLoading) {
 
 		let Name = uniqid() + data['Name'];
 		let Files = this.Files;
 
 		this.videoName = Name;
-
-		console.log('Started video!')
 
 		Files[Name] = {  //Create a new Entry in The Files Variable
 			FileSize: data['Size'],
@@ -38,7 +36,7 @@ class videoUploader {
 		catch (er) {
 		} //It's a New File
 
-		fs.open(publicPath + tempPath + Name, "a", '0755', function(err, fd) {
+		fs.open(publicPath + tempPath + Name, "a", '0755', function (err, fd) {
 			if (err) {
 				console.log(err);
 			}
@@ -49,8 +47,8 @@ class videoUploader {
 		});
 	}
 
-	uploadVideo (data, publicPath, socket, io, uniqIdForOneLoading) {
-		
+	uploadVideo(data, publicPath, socket, io, uniqIdForOneLoading) {
+
 		let Name = this.videoName;
 		let Files = this.Files;
 
@@ -60,13 +58,22 @@ class videoUploader {
 		//If File is Fully Uploaded
 		if (Files[Name]['Downloaded'] == Files[Name]['FileSize']) {
 			fs.write(Files[Name]['Handler'], Files[Name]['Data'], null, 'Binary', (err, Writen) => {
+
 				var input = fs.createReadStream(publicPath + tempPath + Name);
+
 				var output = fs.createWriteStream(publicPath + videoPath + Name);
 
 				input.pipe(output);
 
+				console.log('1')
+
 				input.on("end", () => {
-					fs.unlink(publicPath + tempPath + Name, () => { //This Deletes The Temporary File
+					console.log(publicPath + tempPath + Name)
+					fs.unlink(publicPath + tempPath + Name, (err) => { //This Deletes The Temporary File
+						console.log('2')
+						if (err) {
+							console.log('can`t unlink');
+						}
 						io.to(socket.id).emit('doneUploadVideo', { video: videoPath + Name, uniqIdForOneLoading });
 						Files = {};
 					});

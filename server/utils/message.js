@@ -12,6 +12,10 @@ var saveMessage = (message, callback) => {
 	var type = message.type;
 	var timestamp = message.timestamp
 
+	if (!text) {
+		return callback(undefined, 'Empty text value');
+	}
+
 	pool.getConnection(function (err, connection) {
 
 		connection.query('INSERT INTO chat_messages SET ?', {
@@ -41,13 +45,8 @@ var saveMessage = (message, callback) => {
 				});
 				connection.release();
 			});
-
-			
-			
 		});
-
 	});
-
 };
 
 module.exports = { saveMessage };

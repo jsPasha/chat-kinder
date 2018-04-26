@@ -8,7 +8,11 @@ var initSockets = (io, publicPath) => {
 
 		socket.on('createMessage', (message) => {
 
-			saveMessage(message, (data) => {
+			saveMessage(message, (data, err) => {
+
+				if (err) {
+					return io.to(message.room).emit('messageError', err);
+				}
 
 				io.to(message.room).emit('newMessage', data);
 
