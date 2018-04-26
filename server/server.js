@@ -48,34 +48,32 @@ app.post('/upload', function (req, res) {
 
 app.get('/rooms', (req, res) => {
 
-	res.send('hello!');
+	pool.getConnection(function (err, connection) {
 
-	// pool.getConnection(function (err, connection) {
+		res.send('hello!')
 
-	// 	res.send('hello!')
+		var userId = req.query.user_id || 0;
 
-		// var userId = req.query.user_id || 0;
+		connection.query(`SELECT cr.id, cr.name
+		FROM chat_rooms cr
+		LEFT JOIN chat_room_user cru
+		ON cr.id = cru.id_room
+		WHERE cru.id_user = ${userId}`, function (err, result, fields) {
 
-		// connection.query(`SELECT cr.id, cr.name
-		// FROM chat_rooms cr
-		// LEFT JOIN chat_room_user cru
-		// ON cr.id = cru.id_room
-		// WHERE cru.id_user = ${userId}`, function (err, result, fields) {
+				if (err) {
+					logEvent(`QUERY ERROR: Rooms for user "${userId}" was not selected`);
+					connection.release();
+					return console.log(err);
+				}
 
-		// 		if (err) {
-		// 			logEvent(`QUERY ERROR: Rooms for user "${userId}" was not selected`);
-		// 			connection.release();
-		// 			return console.log(err);
-		// 		}
+				getUserName(userId, (username) => {
+					res.status(200).send({ username, result });
+				});
 
-		// 		getUserName(userId, (username) => {
-		// 			res.status(200).send({ username, result });
-		// 		});
+				connection.release();
 
-		// 		connection.release();
-
-		// 	});
-	// });
+			});
+	});
 
 });
 
