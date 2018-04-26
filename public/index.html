@@ -24,11 +24,7 @@
 		<div id="messages">
 
 			<ul id="messages_body"></ul>
-			<div id='UploadArea'>
-					<div id="ProgressContainer">
-						<div id="ProgressBar"></div>
-					</div>
-				</div>
+			<ul class="temp_messages"></ul>
 			<div id="messages_form">
 
 				<form id="messages_form_self" action="">
@@ -48,11 +44,9 @@
 	</script>
 
 	<script id="message_temp_template" type="text/template">
-		<li class="message_item temp-{{timestamp}} {{position}}">
-			<div>
-				<p><b>{{sender}}</b></p>
-				<div>{{#type}}{{text}}{{/type}}</div>
-			</div>
+		<li class="message_temp temp-{{timestamp}}">
+			<p>Loading {{messageType}}...</p>
+			<div>{{#type}}{{text}}{{/type}}</div>
 		</li>
 	</script>
 

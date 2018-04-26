@@ -38,6 +38,7 @@ ul {
 	background-color: #fff;
 	flex-grow: 1;	
 	visibility: hidden;
+	position: relative;
 }
 #messages_form {
 	background-color: #8B4513;
@@ -125,7 +126,29 @@ ul {
 }
 .progress {
 	height: 6px;
-	background-color: red;
+	background-color: green;
 	width: 0;
-	height: 100%;
+	border-radius: 2px;
+	margin-top: 5px;
+}
+.temp_messages {
+	position: absolute;
+	bottom: 75px;
+	left: 10px;
+	width: 150px;
+	border-radius: 5px;
+	text-align: left;
+	box-shadow: 0 0 5px 0 #000;
+	max-width: 40%;
+}
+.message_temp {
+	background-color: lightblue;
+	padding: 10px;
+	border-bottom: 1px solid #000;
+}
+.message_temp:last-child {
+	border-bottom: 0;
+}
+.message_temp p {
+	margin: 0;
 }

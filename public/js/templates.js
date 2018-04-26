@@ -7,21 +7,19 @@ function generateTempMessage(timestamp, type) {
 			return function (content, render) {
 				switch (type) {
 					case 'image':
-						return '<div class="image_message_body">' + render(content) + '</div>';
+						return '<div>' + render(content) + '</div>';
 						break;
 					case 'video':
-						return '<div class="video_message_body progress_body"><div class="progress progress-'+timestamp+'"></div></div>';
+						return '<div class="progress_body"><div class="progress progress-'+timestamp+'"></div></div>';
 						break;
 					default:
 						break;
 				}
 			}
 		},
-		sender: userName,
-		position: 'right my_message'
+		messageType: type
 	});
-	$('#messages_body').append(html);
-	scrollToBottom();
+	$('.temp_messages').append(html);
 }
 
 function generateMessage(data) {

@@ -31,10 +31,9 @@ $(function () {
 	socket.on('newMessage', function (data) {
 		var html = generateMessage(data);
 		if (data.timestamp) {
-			$('.temp-' + data.timestamp).replaceWith(html)
-		} else {
-			$('#messages_body').append(html);
+			$('.temp-' + data.timestamp).remove()
 		}
+		$('#messages_body').append(html);
 		scrollToBottom();
 	});
 
