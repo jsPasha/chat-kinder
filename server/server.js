@@ -104,8 +104,9 @@ io.on('connection', (socket) => {
 	socket.emit()
 
 	socket.on('createMessage', (message) => {
+		
 		saveMessage(message, (data) => {
-			io.to(message.room).emit('newMessage', message);
+			io.to(message.room).emit('newMessage', data);
 		});
 	});
 

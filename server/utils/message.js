@@ -1,6 +1,7 @@
 const moment = require('moment');
 const { pool } = require('../db/db');
 const { logEvent } = require('./logs');
+const { getUserName } = require('./user');
 
 var saveMessage = (message, callback) => {
 
@@ -17,19 +18,30 @@ var saveMessage = (message, callback) => {
 			id_sender,
 			text,
 			created_at,
-			type
+			type,
 		}, function (err, result, fields) {
 			if (err) {
 				logEvent(`QUERY ERROR: Message form ${id_sender} was not saved!`);
 				console.log(err);
 			}
-			connection.release();
-			callback({
-				id_sender,
-				text,
-				type,
-				createdAt: moment().valueOf()
+
+			connection.query(`SELECT username FROM user u WHERE u.id = ${id_sender}`, function (error, datauser, fields) {
+				if (error) {
+					logEvent(`QUERY ERROR: USERNAME form ${id_sender} was not getted!`);
+					console.log(error);
+				}
+				callback({
+					id_sender,
+					username: datauser[0].username,
+					text,
+					type,
+					createdAt: moment().valueOf()
+				});
+				connection.release();
 			});
+
+			
+			
 		});
 
 	});

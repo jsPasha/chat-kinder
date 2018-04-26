@@ -28,7 +28,6 @@ function setUserNameToCookie(name) {
 		}
 
 	});
-	console.log(newcookie)
 	document.cookie = newcookie.join(',');
 }
 
@@ -79,6 +78,7 @@ $(function () {
 
 	socket.on('newMessage', function (data) {
 		var html = generateMessage(data);
+		console.log(data)
 		if (data.timestamp) $('.temp-' + data.timestamp).remove();
 		$('#messages_body').append(html);
 		scrollToBottom();
@@ -172,6 +172,8 @@ $(function () {
 			time: moment(data.created_at).format('h:mm a'),
 			position: data.id_sender === userId ? 'right my_message' : 'left'
 		});
+
+		
 	}
 
 	function scrollToBottom() {
