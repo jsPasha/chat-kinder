@@ -23,6 +23,10 @@ ul {
 	margin: 15px;
 	border-radius: 5px;
 }
+.room_item.active {
+	background-color: green;
+	color: #fff;
+}
 .right {
 	text-align: right;
 }

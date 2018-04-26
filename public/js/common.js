@@ -1,51 +1,3 @@
-var userId = undefined;
-
-function getUserNameFromCookie() {
-	var cookies = document.cookie.split(",");
-	var cookieObj = {};
-	cookies.forEach(function (e) {
-		var cookieName = e.split('=')[0];
-		var cookieVal = e.split('=')[1];
-		if (cookieName == 'userId') {
-			userId = cookieVal;
-			return;
-		}
-	});
-}
-
-function setUserNameToCookie(name) {
-	document.cookie = document.cookie + ",userId=" + name;
-	var cookies = document.cookie.split(",");
-	var newcookie = []
-	cookies.forEach(function (e) {
-		var cookieName = e.split('=')[0];
-		var cookieVal = e.split('=')[1];
-		if (cookieName == 'userId') {
-			cookieVal = name;
-			newcookie.push(cookieName + '=' + cookieVal)
-		} else {
-			newcookie.push(cookieName + '=' + cookieVal)
-		}
-
-	});
-	document.cookie = newcookie.join(',');
-}
-
-getUserNameFromCookie();
-
-if (!userId) {
-	userId = prompt('Enter id: \n Pavlo: 1 \n Igor: 2 \n Jenya: 3') || 0;
-	setUserNameToCookie(userId);
-}
-
-function changeUser() {
-	userId = prompt('Enter id: \n Pavlo: 1 \n Igor: 2 \n Jenya: 3') || 0;
-	setUserNameToCookie(userId);
-	getRooms()
-}
-
-var userName;
-
 function getRooms() {
 	$('#messages').css('visibility', 'hidden');
 	$('#rooms').empty();
@@ -78,7 +30,6 @@ $(function () {
 
 	socket.on('newMessage', function (data) {
 		var html = generateMessage(data);
-		console.log(data)
 		if (data.timestamp) $('.temp-' + data.timestamp).remove();
 		$('#messages_body').append(html);
 		scrollToBottom();
@@ -86,11 +37,14 @@ $(function () {
 
 	$('#loadImageInput').change(function (e) {
 		var timestamp = new Date().getTime();
-		generateTempMessage(timestamp);
+		generateTempMessage(timestamp, 'image');
 		sendImage(timestamp);
 	});
 
 	$('body').on('click', '.room_item', function () {
+
+		$('.room_item').removeClass('active');
+		$(this).addClass('active');
 
 		$('#messages').css('visibility', 'visible');
 		$('#messages_body').empty();
@@ -135,64 +89,6 @@ $(function () {
 
 	});
 
-	function generateTempMessage(timestamp) {
-		var template = $('#message_temp_template').html();
-		var html = Mustache.render(template, {
-			timestamp: timestamp,
-			loader: '/img/Pacman.svg',
-			sender: userName,
-			position: 'right my_message'
-		});
-		$('#messages_body').append(html);
-		scrollToBottom();
-	}
-
-	function generateMessage(data) {
-		var template = $('#message_template').html();
-		return Mustache.render(template, {
-			type: function () {
-				return function (text, render) {
-					switch (data.type) {
-						case 'text':
-							return render(text);
-							break;
-						case 'image':
-							return '<div class="image_message_body"><img src="' + render(text) + '" /></div>';
-							break;
-						case 'video':
-							return '<div class="video_message_body"><video controls><source src="' + render(text) + '#t=00:00:10" type="video/mp4"></video></div>';
-							break;
-						default:
-							break;
-					}
-				}
-			},
-			text: data.text,
-			sender: data.username || userName,
-			time: moment(data.created_at).format('h:mm a'),
-			position: data.id_sender === userId ? 'right my_message' : 'left'
-		});
-
-		
-	}
-
-	function scrollToBottom() {
-		var messages = $('#messages_body');
-		var newMessage = messages.children('li:last-child');
-		var clientHeight = messages.prop('clientHeight');
-		var scrollTop = messages.prop('scrollTop');
-		var scrollHeight = messages.prop('scrollHeight');
-		var newMessageHeight = newMessage.innerHeight();
-		var lastMessageHeight = newMessage.prev().innerHeight();
-
-		messages.scrollTop(scrollHeight);
-
-		// if (clientHeight + scrollTop + newMessageHeight + lastMessageHeight >= scrollHeight) {
-		// 	messages.scrollTop(scrollHeight);
-		// }
-
-	}
-
 	function sendImage(timestamp) {
 		var formData = new FormData();
 		var imagefile = document.querySelector('[name=sampleFile]');
@@ -220,7 +116,7 @@ $(function () {
 	}
 
 
-
+	// START VIDEO UPLOADING
 	if (window.File && window.FileReader) { //These are the relevant HTML5 objects that we are going to use 
 		$('#FileBox').change(FileChosen);
 	}
@@ -228,44 +124,49 @@ $(function () {
 		// document.getElementById('UploadArea').innerHTML = "Your Browser Doesn't Support The File API Please Update Your Browser";
 	}
 
-	var SelectedFile;
-	var Name;
+	var SelectedFile = {};
+	var Name = {};
+	var FReader = {};
 
 	function FileChosen(evnt) {
-		SelectedFile = evnt.target.files[0];
-		Name = SelectedFile.name;
-		StartUpload();
-	}
+		var uniqIdForOneLoading = Math.round(evnt.timeStamp);
+		SelectedFile[uniqIdForOneLoading] = evnt.target.files[0];
+		Name[uniqIdForOneLoading] = SelectedFile[uniqIdForOneLoading].name;
+		StartUpload(uniqIdForOneLoading);
+	}	
 
-	var FReader;
+	function StartUpload(uniqIdForOneLoading) {
 
-	function StartUpload() {
+		generateTempMessage(uniqIdForOneLoading, 'video');
+
 		if (document.getElementById('FileBox').value != "") {
-			FReader = new FileReader();
 
-			var fileSizeInMegabyte = Math.round(SelectedFile.size / 1048576);
+			FReader[uniqIdForOneLoading] = new FileReader();
 
-			FReader.onload = function (evnt) {
-				socket.emit('uploadVideo', { 'Name': Name, Data: evnt.target.result });
+			var fileSizeInMegabyte = Math.round(SelectedFile[uniqIdForOneLoading].size / 1048576);
+
+			FReader[uniqIdForOneLoading].onload = function (evnt) {
+				socket.emit('uploadVideo', { uniqIdForOneLoading: uniqIdForOneLoading, 'Name': Name[uniqIdForOneLoading], Data: evnt.target.result });
 			}
 
-			socket.emit('startUploadVideo', { 'Name': Name, 'Size': SelectedFile.size });
+			socket.emit('startUploadVideo', { uniqIdForOneLoading: uniqIdForOneLoading, 'Name': Name[uniqIdForOneLoading], 'Size': SelectedFile[uniqIdForOneLoading].size });
+
 		}
 		else {
 			alert("Please Select A File");
 		}
 	}
-
-
+	
 	socket.on('MoreData', function (data) {
 		UpdateBar(data['Percent']);
+		var uniqIdForOneLoading = data.uniqIdForOneLoading;
 		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
 		var NewFile; //The Variable that will hold the new Block of Data
-		if (SelectedFile.webkitSlice)
-			NewFile = SelectedFile.webkitSlice(Place, Place + Math.min(524288, (SelectedFile.size - Place)));
+		if (SelectedFile[uniqIdForOneLoading].webkitSlice)
+			NewFile = SelectedFile[uniqIdForOneLoading].webkitSlice(Place, Place + Math.min(524288, (SelectedFile[uniqIdForOneLoading].size - Place)));
 		else
-			NewFile = SelectedFile.slice(Place, Place + Math.min(524288, (SelectedFile.size - Place)));
-		FReader.readAsBinaryString(NewFile);
+			NewFile = SelectedFile[uniqIdForOneLoading].slice(Place, Place + Math.min(524288, (SelectedFile[uniqIdForOneLoading].size - Place)));
+		FReader[uniqIdForOneLoading].readAsBinaryString(NewFile);
 	});
 
 	function UpdateBar(percent) {
@@ -277,21 +178,19 @@ $(function () {
 	}
 
 	socket.on('doneUploadVideo', function (data) {
-		console.log(data)
+		var timestamp = data.uniqIdForOneLoading;
 		$('#ProgressBar').css('width', '100%');
-		SelectedFile = null;
+		delete SelectedFile[timestamp];
 		$('#FileBox').val('');
 		$('#ProgressBar').hide();
 		socket.emit('createMessage', {
 			text: data.video,
 			room: activeRoom,
 			id_sender: userId,
+			timestamp: timestamp,
 			type: 'video'
 		});
 	});
-
-	function Refresh() {
-		location.reload(true);
-	}
+	// END VIDEO UPLOADING
 
 });

@@ -10,6 +10,7 @@ var saveMessage = (message, callback) => {
 	var id_sender = message.id_sender;
 	var created_at = moment().valueOf();
 	var type = message.type;
+	var timestamp = message.timestamp
 
 	pool.getConnection(function (err, connection) {
 
@@ -18,7 +19,7 @@ var saveMessage = (message, callback) => {
 			id_sender,
 			text,
 			created_at,
-			type,
+			type
 		}, function (err, result, fields) {
 			if (err) {
 				logEvent(`QUERY ERROR: Message form ${id_sender} was not saved!`);
@@ -35,6 +36,7 @@ var saveMessage = (message, callback) => {
 					username: datauser[0].username,
 					text,
 					type,
+					timestamp,
 					createdAt: moment().valueOf()
 				});
 				connection.release();
