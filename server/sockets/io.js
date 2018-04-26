@@ -1,6 +1,7 @@
 const { saveMessage } = require('./../utils/message')
+const { videoUploader } = require('./../utils/videoUploader');
 
-var initSockets = (io) => {
+var initSockets = (io, publicPath) => {
 	io.on('connection', (socket) => {
 
 		socket.emit();

@@ -30,13 +30,17 @@ $(function () {
 
 	socket.on('newMessage', function (data) {
 		var html = generateMessage(data);
-		if (data.timestamp) $('.temp-' + data.timestamp).remove();
-		$('#messages_body').append(html);
+		if (data.timestamp) {
+			$('.temp-' + data.timestamp).replaceWith(html)
+		} else {
+			$('#messages_body').append(html);
+		}
 		scrollToBottom();
 	});
 
 	$('#loadImageInput').change(function (e) {
 		var timestamp = new Date().getTime();
+		console.log(this.value)
 		generateTempMessage(timestamp, 'image');
 		sendImage(timestamp);
 	});
@@ -103,6 +107,7 @@ $(function () {
 				'Content-Type': 'multipart/form-data'
 			}
 		}).then(function (response) {
+			$('#loadImageInput').val('');
 			socket.emit('createMessage', {
 				text: response.data,
 				room: activeRoom,
@@ -158,8 +163,9 @@ $(function () {
 	}
 	
 	socket.on('MoreData', function (data) {
-		UpdateBar(data['Percent']);
+		
 		var uniqIdForOneLoading = data.uniqIdForOneLoading;
+		UpdateBar(data['Percent'], uniqIdForOneLoading);
 		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
 		var NewFile; //The Variable that will hold the new Block of Data
 		if (SelectedFile[uniqIdForOneLoading].webkitSlice)
@@ -169,9 +175,8 @@ $(function () {
 		FReader[uniqIdForOneLoading].readAsBinaryString(NewFile);
 	});
 
-	function UpdateBar(percent) {
-		$('#ProgressBar').show();
-		$('#ProgressBar').css('width', percent + '%');
+	function UpdateBar(percent, uniqIdForOneLoading) {
+		$('.progress-'+uniqIdForOneLoading).css('width', percent + '%');
 		// $('#percent').html(Math.round(percent * 100) / 100 + '%');
 		// var MBDone = Math.round(((percent / 100.0) * SelectedFile.size) / 1048576);
 		// $('#MB').html(MBDone);
@@ -179,10 +184,8 @@ $(function () {
 
 	socket.on('doneUploadVideo', function (data) {
 		var timestamp = data.uniqIdForOneLoading;
-		$('#ProgressBar').css('width', '100%');
 		delete SelectedFile[timestamp];
 		$('#FileBox').val('');
-		$('#ProgressBar').hide();
 		socket.emit('createMessage', {
 			text: data.video,
 			room: activeRoom,

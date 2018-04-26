@@ -3,15 +3,12 @@ const socketIO = require('socket.io');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 
-const { saveImage } = require('./utils/saveImage');
-const { videoUploader } = require('./utils/saveVideo');
 const { appRoutes } = require('./routes/routes');
 const { initSockets } = require('./sockets/io')
 
-const path = require('path');
-const http = require('http');
 
-const publicPath = path.join(__dirname, '../public');
+const http = require('http');
+const {publicPath} = require('./path');
 
 const port = process
 	.env.PORT || 3000;
@@ -48,7 +45,7 @@ app.get('/messages', (req, res) => {
 
 });
 
-initSockets(io);
+initSockets(io, publicPath);
 
 server.listen(port, () => {
 	console.log(`Started on port ${port}`)

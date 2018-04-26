@@ -1,16 +1,16 @@
-function generateTempMessage(timestamp) {
+function generateTempMessage(timestamp, type) {
 	var template = $('#message_temp_template').html();
 	var html = Mustache.render(template, {
 		timestamp: timestamp,
 		loader: '/img/Pacman.svg',
 		type: function () {
 			return function (content, render) {
-				switch (data.type) {
+				switch (type) {
 					case 'image':
 						return '<div class="image_message_body">' + render(content) + '</div>';
 						break;
 					case 'video':
-						return '<div class="video_message_body">' + render(content) + '</div>';
+						return '<div class="video_message_body progress_body"><div class="progress progress-'+timestamp+'"></div></div>';
 						break;
 					default:
 						break;

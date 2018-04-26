@@ -86,7 +86,7 @@ ul {
 	border-radius: 5px;
 	background-color: lightgreen;
 }
-.message_item.my_message div {
+.message_item.my_message > div {
 	background-color: lightblue;
 }
 .image_message_body {
@@ -120,9 +120,12 @@ ul {
 	width: 100%;
 	height: 100%;
 }
-#ProgressBar {
+.progress-body {
+	height: 100%;
+}
+.progress {
 	height: 6px;
 	background-color: red;
 	width: 0;
-	display: none;
+	height: 100%;
 }

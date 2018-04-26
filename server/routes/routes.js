@@ -1,5 +1,7 @@
 const { pool } = require('./../db/db');
 const { getUserName } = require('./../utils/user');
+const { saveImage } = require('./../utils/saveImage');
+const { publicPath } = require('./../path');
 
 class appRoutes {
 	getMessages(req, res) {
@@ -49,7 +51,7 @@ class appRoutes {
 		});
 	}
 
-	postUpload() {
+	postUpload(req, res) {
 
 		if (!req.files) return res.status(400).send('No files were uploaded.');
 
