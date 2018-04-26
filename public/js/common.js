@@ -1,23 +1,76 @@
-var userId = prompt('Enter id: \n Pavlo: 1 \n Igor: 2 \n Jenya: 3') || 0;
+var userId = undefined;
+
+function getUserNameFromCookie() {
+	var cookies = document.cookie.split(",");
+	var cookieObj = {};
+	cookies.forEach(function (e) {
+		var cookieName = e.split('=')[0];
+		var cookieVal = e.split('=')[1];
+		if (cookieName == 'userId') {
+			userId = cookieVal;
+			return;
+		}
+	});
+}
+
+function setUserNameToCookie(name) {
+	document.cookie = document.cookie + ",userId=" + name;
+	var cookies = document.cookie.split(",");
+	var newcookie = []
+	cookies.forEach(function (e) {
+		var cookieName = e.split('=')[0];
+		var cookieVal = e.split('=')[1];
+		if (cookieName == 'userId') {
+			cookieVal = name;
+			newcookie.push(cookieName + '=' + cookieVal)
+		} else {
+			newcookie.push(cookieName + '=' + cookieVal)
+		}
+
+	});
+	console.log(newcookie)
+	document.cookie = newcookie.join(',');
+}
+
+getUserNameFromCookie();
+
+if (!userId) {
+	userId = prompt('Enter id: \n Pavlo: 1 \n Igor: 2 \n Jenya: 3') || 0;
+	setUserNameToCookie(userId);
+}
+
+function changeUser() {
+	userId = prompt('Enter id: \n Pavlo: 1 \n Igor: 2 \n Jenya: 3') || 0;
+	setUserNameToCookie(userId);
+	getRooms()
+}
+
 var userName;
 
-axios.get('/rooms', {
-	params: {
-		user_id: userId
-	}
-}).then(function (response) {
-	userName = response.data.username;
-	response.data.result.forEach(function (el) {
-		var template = $('#room_template').html();
-		var html = Mustache.render(template, {
-			name: el.name,
-			id: el.id
-		});
-		$('#rooms').append(html);
-	})
-}).catch(function (error) {
-	console.log(error);
-});
+function getRooms() {
+	$('#messages').css('visibility', 'hidden');
+	$('#rooms').empty();
+	axios.get('/rooms', {
+		params: {
+			user_id: userId
+		}
+	}).then(function (response) {
+		userName = response.data.username;
+		$('#user').text(userName)
+		response.data.result.forEach(function (el) {
+			var template = $('#room_template').html();
+			var html = Mustache.render(template, {
+				name: el.name,
+				id: el.id
+			});
+			$('#rooms').append(html);
+		})
+	}).catch(function (error) {
+		console.log(error);
+	});
+}
+
+getRooms();
 
 var activeRoom = false;
 
@@ -26,13 +79,12 @@ $(function () {
 
 	socket.on('newMessage', function (data) {
 		var html = generateMessage(data);
-		console.log(data)
-		if (data.timestamp) $('.temp-'+data.timestamp).remove();
+		if (data.timestamp) $('.temp-' + data.timestamp).remove();
 		$('#messages_body').append(html);
 		scrollToBottom();
 	});
 
-	$('#loadImageInput').change(function () {
+	$('#loadImageInput').change(function (e) {
 		var timestamp = new Date().getTime();
 		generateTempMessage(timestamp);
 		sendImage(timestamp);
@@ -99,11 +151,19 @@ $(function () {
 		var template = $('#message_template').html();
 		return Mustache.render(template, {
 			type: function () {
-				return function(text, render) {
-					if (data.type == 'text') {
-						return render(text);
-					} else if (data.type == 'image') {
-						return '<div class="image_message_body"><img src="' + render(text) + '" /></div>';
+				return function (text, render) {
+					switch (data.type) {
+						case 'text':
+							return render(text);
+							break;
+						case 'image':
+							return '<div class="image_message_body"><img src="' + render(text) + '" /></div>';
+							break;
+						case 'video':
+							return '<div class="video_message_body"><video controls><source src="' + render(text) + '#t=00:00:10" type="video/mp4"></video></div>';
+							break;
+						default:
+							break;
 					}
 				}
 			},
@@ -155,6 +215,81 @@ $(function () {
 		}).catch(function (error) {
 			console.log(error)
 		});
+	}
+
+
+
+	if (window.File && window.FileReader) { //These are the relevant HTML5 objects that we are going to use 
+		$('#FileBox').change(FileChosen);
+	}
+	else {
+		// document.getElementById('UploadArea').innerHTML = "Your Browser Doesn't Support The File API Please Update Your Browser";
+	}
+
+	var SelectedFile;
+	var Name;
+
+	function FileChosen(evnt) {
+		SelectedFile = evnt.target.files[0];
+		Name = SelectedFile.name;
+		StartUpload();
+	}
+
+	var FReader;
+
+	function StartUpload() {
+		if (document.getElementById('FileBox').value != "") {
+			FReader = new FileReader();
+
+			var fileSizeInMegabyte = Math.round(SelectedFile.size / 1048576);
+
+			FReader.onload = function (evnt) {
+				socket.emit('uploadVideo', { 'Name': Name, Data: evnt.target.result });
+			}
+
+			socket.emit('startUploadVideo', { 'Name': Name, 'Size': SelectedFile.size });
+		}
+		else {
+			alert("Please Select A File");
+		}
+	}
+
+
+	socket.on('MoreData', function (data) {
+		UpdateBar(data['Percent']);
+		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
+		var NewFile; //The Variable that will hold the new Block of Data
+		if (SelectedFile.webkitSlice)
+			NewFile = SelectedFile.webkitSlice(Place, Place + Math.min(524288, (SelectedFile.size - Place)));
+		else
+			NewFile = SelectedFile.slice(Place, Place + Math.min(524288, (SelectedFile.size - Place)));
+		FReader.readAsBinaryString(NewFile);
+	});
+
+	function UpdateBar(percent) {
+		$('#ProgressBar').show();
+		$('#ProgressBar').css('width', percent + '%');
+		// $('#percent').html(Math.round(percent * 100) / 100 + '%');
+		// var MBDone = Math.round(((percent / 100.0) * SelectedFile.size) / 1048576);
+		// $('#MB').html(MBDone);
+	}
+
+	socket.on('doneUploadVideo', function (data) {
+		console.log(data)
+		$('#ProgressBar').css('width', '100%');
+		SelectedFile = null;
+		$('#FileBox').val('');
+		$('#ProgressBar').hide();
+		socket.emit('createMessage', {
+			text: data.video,
+			room: activeRoom,
+			id_sender: userId,
+			type: 'video'
+		});
+	});
+
+	function Refresh() {
+		location.reload(true);
 	}
 
 });

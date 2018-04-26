@@ -4,8 +4,6 @@ const { logEvent } = require('./logs');
 
 var saveMessage = (message, callback) => {
 
-	console.log(message)
-
 	var text = message.text;
 	var room_id = message.room;
 	var id_sender = message.id_sender;

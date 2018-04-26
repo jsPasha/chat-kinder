@@ -5,8 +5,9 @@ const fileUpload = require('express-fileupload');
 
 const { pool } = require('./db/db');
 const { logEvent } = require('./utils/logs');
-const { saveFile } = require('./utils/files');
+const { saveImage } = require('./utils/saveImage');
 const { getUserName } = require('./utils/user');
+const { startVideo, uploadVideo } = require('./utils/saveVideo');
 
 const path = require('path');
 const http = require('http');
@@ -35,7 +36,7 @@ app.post('/upload', function (req, res) {
 
 	let image = req.files.image;
 
-	saveFile(image, publicPath, '/img/uploads/', req.body.room_id, req.body.id_sender, (filePath, err) => {
+	saveImage(image, publicPath, '/img/uploads/', req.body.room_id, req.body.id_sender, (filePath, err) => {
 
 		if (err) return res.status(500).send(err);
 
@@ -49,8 +50,8 @@ app.get('/rooms', (req, res) => {
 
 	pool.getConnection(function (err, connection) {
 
-		var userId = req.query.user_id || 0; 
-		
+		var userId = req.query.user_id || 0;
+
 		connection.query(`SELECT cr.id, cr.name
 		FROM chat_rooms cr
 		LEFT JOIN chat_room_user cru
@@ -62,9 +63,9 @@ app.get('/rooms', (req, res) => {
 					connection.release();
 					return console.log(err);
 				}
-				
+
 				getUserName(userId, (username) => {
-					res.status(200).send({username, result});
+					res.status(200).send({ username, result });
 				});
 
 				connection.release();
@@ -114,8 +115,23 @@ io.on('connection', (socket) => {
 		}
 		socket.join(data.room);
 	});
+	
+
+	socket.on('startUploadVideo', function (data) {
+
+		startVideo(data, publicPath, socket);
+		
+	});
+
+
+	socket.on('uploadVideo', function (data) {
+		
+		uploadVideo(data, publicPath, socket);
+
+	});
 
 });
+
 
 
 
