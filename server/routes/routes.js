@@ -2,6 +2,7 @@ const { pool } = require('./../db/db');
 const { getUserName } = require('./../utils/user');
 const { saveFile } = require('./../utils/saveFile');
 const { publicPath } = require('./../path');
+var CryptoJS = require("crypto-js");
 
 class appRoutes {
 	getMessages(req, res) {
@@ -17,9 +18,17 @@ class appRoutes {
 			ORDER BY cm.created_at DESC`, function (err, result, fields) {
 					if (err) {
 						logEvent(`QUERY ERROR: Messages from room "${req.query.room_id}" was not selected`);
+
 						connection.release();
 						return console.log(err);
 					}
+
+					result = result.map((el) => {
+						var bytes = CryptoJS.AES.decrypt(el.text, 'infinitywar');
+						el.text = bytes.toString(CryptoJS.enc.Utf8);
+						return el;
+					});
+					
 					res.status(200).send(result);
 					connection.release();
 				});

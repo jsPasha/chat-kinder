@@ -2,10 +2,15 @@ const moment = require('moment');
 const { pool } = require('../db/db');
 const { logEvent } = require('./logs');
 const { getUserName } = require('./user');
+var CryptoJS = require("crypto-js");
+
 
 var saveMessage = (message, callback) => {
 
 	var text = message.text;
+
+	var ciphertext = CryptoJS.AES.encrypt(text, 'infinitywar').toString();
+ 
 	var room_id = message.room;
 	var id_sender = message.id_sender;
 	var created_at = moment().valueOf();
@@ -25,7 +30,7 @@ var saveMessage = (message, callback) => {
 		connection.query('INSERT INTO chat_messages SET ?', {
 			room_id,
 			id_sender,
-			text,
+			text: ciphertext,
 			created_at,
 			type
 		}, function (err, result, fields) {
@@ -52,5 +57,19 @@ var saveMessage = (message, callback) => {
 		});
 	});
 };
+
+var generateHash = (text) => {
+	return new Promise((resolve, reject) => {
+		bcrypt.genSalt(8, (err, salt) => {
+			if (err) {
+				reject();
+			} else {
+				bcrypt.hash(text, salt, (err, hash) => {
+					resolve(hash);
+				});
+			}
+		});
+	});
+}
 
 module.exports = { saveMessage };
