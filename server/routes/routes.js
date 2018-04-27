@@ -1,12 +1,14 @@
 const { pool } = require('./../db/db');
 const { getUserName } = require('./../utils/user');
-const { saveImage } = require('./../utils/saveImage');
+const { saveFile } = require('./../utils/saveFile');
 const { publicPath } = require('./../path');
 
 class appRoutes {
 	getMessages(req, res) {
 		pool.getConnection(function (err, connection) {
-
+			if (err) {
+				return res.status(400).send(err)
+			}
 			connection.query(`SELECT cm.created_at, cm.text, cm.id_sender, cm.type, u.username
 			from chat_messages cm
 			inner join user u
@@ -26,6 +28,10 @@ class appRoutes {
 
 	getRooms(req, res) {
 		pool.getConnection(function (err, connection) {
+
+			if (err) {
+				return res.status(400).send(err)
+			}
 
 			var userId = req.query.user_id || 0;
 
@@ -51,17 +57,24 @@ class appRoutes {
 		});
 	}
 
-	postUpload(req, res) {
+	postUpload(req, res, error) {
+
+		if (error) {
+			return res.status(400).send(error);
+		}
 
 		if (!req.files) return res.status(400).send('No files were uploaded.');
 
-		let image = req.files.image;
+		let type = req.body.type;
+		let file = req.files[type];
 
-		saveImage(image, publicPath, '/img/uploads/', req.body.room_id, req.body.id_sender, (filePath, err) => {
+		console.log(type)
+
+		saveFile(file, publicPath, `/${type}/uploads/`, req.body.room_id, req.body.id_sender, type, (fileInfo, err) => {
 
 			if (err) return res.status(500).send(err);
 
-			res.send(filePath);
+			res.send(fileInfo);
 
 		});
 

@@ -135,7 +135,7 @@ ul {
 	position: absolute;
 	bottom: 75px;
 	left: 10px;
-	width: 150px;
+	width: 200px;
 	border-radius: 5px;
 	text-align: left;
 	box-shadow: 0 0 5px 0 #000;
@@ -151,4 +151,20 @@ ul {
 }
 .message_temp p {
 	margin: 0;
+}
+.document_message_body {
+	text-align: center;
+	margin: 15px 0 5px;
+	text-align: center;
+	height: 125px;
+}
+.document_message_body a {
+	display: block;
+	text-decoration: none;
+	color: #000;
+}
+.document_message_body a img {
+	display: block;
+	margin: 0 auto 5px;
+	width: 100px;
 }

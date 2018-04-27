@@ -3,20 +3,6 @@ function generateTempMessage(timestamp, type) {
 	var html = Mustache.render(template, {
 		timestamp: timestamp,
 		loader: '/img/Pacman.svg',
-		type: function () {
-			return function (content, render) {
-				switch (type) {
-					case 'image':
-						return '<div>' + render(content) + '</div>';
-						break;
-					case 'video':
-						return '<div class="progress_body"><div class="progress progress-'+timestamp+'"></div></div>';
-						break;
-					default:
-						break;
-				}
-			}
-		},
 		messageType: type
 	});
 	$('.temp_messages').append(html);
@@ -24,6 +10,7 @@ function generateTempMessage(timestamp, type) {
 
 function generateMessage(data) {
 	var template = $('#message_template').html();
+	var fileName = data.text.split('_kindrklink_')[1];
 	return Mustache.render(template, {
 		type: function () {
 			return function (text, render) {
@@ -37,14 +24,19 @@ function generateMessage(data) {
 					case 'video':
 						return '<div class="video_message_body"><video controls><source src="' + render(text) + '" type="video/mp4"></video></div>';
 						break;
+					case 'document':
+						console.log(text)
+						return '<div class="document_message_body"><a target="_blank" href="' + render(text) + '"><img src="img/download.svg"/>' + render("{{fileName}}") + '</a></div>';
+						break;
 					default:
 						break;
 				}
 			}
 		},
 		text: data.text,
+		fileName: fileName,
 		sender: data.username || userName,
 		time: moment(data.created_at).format('h:mm a'),
 		position: data.id_sender === userId ? 'right my_message' : 'left'
-	});	
+	});
 }

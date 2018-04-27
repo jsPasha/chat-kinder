@@ -18,6 +18,10 @@ var saveMessage = (message, callback) => {
 
 	pool.getConnection(function (err, connection) {
 
+		if (err) {
+			return res.status(400).send(err)
+		}
+
 		connection.query('INSERT INTO chat_messages SET ?', {
 			room_id,
 			id_sender,

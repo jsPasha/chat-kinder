@@ -28,12 +28,20 @@
 			<div id="messages_form">
 
 				<form id="messages_form_self" action="">
-					<input hidden id="loadImageInput" type="file" name="sampleFile" accept="image/*" />
-					<img width="40" height="40" src="/img/frame-landscape.svg" onclick="loadImageInput.click();" alt="">
-					<input hidden type="file" id="FileBox" accept="video/mp4,video/x-m4v,video/*">
-					<img width="40" height="40" src="/img/video-player.svg" onclick="FileBox.click();" alt="">
+
+					<input data-load-type="image" hidden id="loadImageInput" type="file" name="sampleFile" accept="image/*" />
+					<img width="40" height="40" src="/img/frame-landscape.svg" onclick="document.getElementById('loadImageInput').click();" alt="">
+
+					<input data-load-type="video" hidden type="file" name="fileVideo" id="FileBox" accept="video/mp4,video/x-m4v,video/*">
+					<img width="40" height="40" src="/img/video-player.svg" onclick="document.getElementById('FileBox').click();" alt="">
+
+					<input data-load-type="document" hidden type="file" name="fileDoc" id="fileDoc" accept="application/msword, application/vnd.ms-excel, application/vnd.ms-powerpoint, text/plain, application/pdf, application/zip,application/x-zip,application/x-zip-compressed">
+					<img width="40" height="40" src="/img/file.svg" onclick="document.getElementById('fileDoc').click();" alt="">
+
 					<input type="text" id="message" placeholder="message" autocomplete="off" />
+
 					<button type="submit">Send</button>
+
 				</form>
 			</div>
 		</div>
@@ -46,7 +54,11 @@
 	<script id="message_temp_template" type="text/template">
 		<li class="message_temp temp-{{timestamp}}">
 			<p>Loading {{messageType}}...</p>
-			<div>{{#type}}{{text}}{{/type}}</div>
+			<div>
+				<div class="progress_body">
+					<div class="progress progress-{{timestamp}}"></div>
+				</div>
+			</div>
 		</li>
 	</script>
 

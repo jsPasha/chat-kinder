@@ -8,7 +8,7 @@ const { initSockets } = require('./sockets/io')
 
 
 const http = require('http');
-const {publicPath} = require('./path');
+const { publicPath } = require('./path');
 
 const port = process
 	.env.PORT || 3000;
@@ -23,7 +23,10 @@ app.use(express.static(publicPath));
 
 app.use(bodyParser.json());
 
-app.use(fileUpload());
+app.use(fileUpload({
+	limits: { fileSize: 200 * 1024 * 1024 },
+	abortOnLimit: true
+}));
 
 var routes = new appRoutes();
 
@@ -33,12 +36,8 @@ app.post('/upload', function (req, res) {
 
 });
 
-app.get('/', (req, res) => {
-	res.send('asdasd')
-});
-
 app.get('/rooms', (req, res) => {
-	
+
 	routes.getRooms(req, res);
 
 });
@@ -49,7 +48,7 @@ app.get('/messages', (req, res) => {
 
 });
 
-initSockets(io, publicPath);
+initSockets(io);
 
 server.listen(port, () => {
 	console.log(`Started on port ${port}`)

@@ -1,5 +1,5 @@
 const { saveMessage } = require('./../utils/message')
-const { videoUploader } = require('./../utils/videoUploader');
+const { publicPath } = require('./../path');
 
 var initSockets = (io, publicPath) => {
 	io.on('connection', (socket) => {
@@ -22,30 +22,7 @@ var initSockets = (io, publicPath) => {
 
 		socket.on('joinRoom', (data) => {
 
-			if (data.prevRoom) socket.leave(data.prevRoom);
-
 			socket.join(data.room);
-
-		});
-
-		var uploaders = {};
-
-		socket.on('startUploadVideo', function (data, uploadId) {
-
-			var uniqIdForOneLoading = data.uniqIdForOneLoading;
-
-			uploaders[uniqIdForOneLoading] = new videoUploader();
-
-			uploaders[uniqIdForOneLoading].startVideo(data, publicPath, socket, io, uniqIdForOneLoading);
-
-		});
-
-
-		socket.on('uploadVideo', function (data) {
-
-			var uniqIdForOneLoading = data.uniqIdForOneLoading;
-
-			uploaders[uniqIdForOneLoading].uploadVideo(data, publicPath, socket, io, uniqIdForOneLoading);
 
 		});
 
