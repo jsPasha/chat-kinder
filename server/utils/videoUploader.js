@@ -6,6 +6,8 @@ const uniqid = require('uniqid');
 const tempPath = '/video/temp/';
 const videoPath = '/video/uploads/'
 
+let { formatVideo } = require('./formatVideo');
+
 class videoUploader {
 
 	constructor() {
@@ -65,16 +67,18 @@ class videoUploader {
 
 				input.pipe(output);
 
-				console.log('1')
-
 				input.on("end", () => {
-					console.log(publicPath + tempPath + Name)
 					fs.unlink(publicPath + tempPath + Name, (err) => { //This Deletes The Temporary File
-						console.log('2')
 						if (err) {
 							console.log('can`t unlink');
 						}
 						io.to(socket.id).emit('doneUploadVideo', { video: videoPath + Name, uniqIdForOneLoading });
+						// var formattedVideo = new formatVideo(videoPath + Name);
+
+						// formattedVideo.formatToMp4((url) => {
+						// 	console.log(url)
+						// })
+
 						Files = {};
 					});
 				});
