@@ -33,6 +33,10 @@ app.post('/upload', function (req, res) {
 
 });
 
+app.get('/', (req, res) => {
+	res.send('asdasd')
+});
+
 app.get('/rooms', (req, res) => {
 	
 	routes.getRooms(req, res);
