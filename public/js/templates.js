@@ -22,7 +22,7 @@ function generateMessage(data) {
 						return '<div class="image_message_body"><img src="' + render(text) + '" /></div>';
 						break;
 					case 'video':
-						return '<div class="video_message_body"><video controls><source src="' + render(text) + '" type="video/mp4"></video></div>';
+						return '<div class="video_message_body"><a class="video_link" href="' + render(text) + '" ><img src="' + render(text) + '.png" /></a></div>';
 						break;
 					case 'document':
 						console.log(text)

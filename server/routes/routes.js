@@ -79,7 +79,7 @@ class appRoutes {
 
 		console.log(type)
 
-		saveFile(file, publicPath, `/${type}/uploads/`, req.body.room_id, req.body.id_sender, type, (fileInfo, err) => {
+		saveFile(file, publicPath, `/uploads/`, req.body.room_id, req.body.id_sender, type, (fileInfo, err) => {
 
 			if (err) return res.status(500).send(err);
 

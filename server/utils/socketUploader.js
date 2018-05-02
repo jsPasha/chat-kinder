@@ -1,9 +1,10 @@
 const fs = require('fs');
 const util = require('util');
 const uniqid = require('uniqid');
+const { getVideoCover } = require('./getVideoCover');
 
 const tempPath = '/uploads/temp/';
-const uploadsPath = '/uploads/'
+const uploadsPath = '/uploads/';
 
 class socketUploader {
 
@@ -69,8 +70,25 @@ class socketUploader {
 						if (err) {
 							console.log('can`t unlink');
 						}
-						io.to(socket.id).emit('doneUploadVideo', { video: uploadsPath + Name, uniqIdForOneLoading });
-						Files = {};
+
+						if (data.type === 'video') {
+							getVideoCover({
+								path: publicPath + uploadsPath,
+								name: Name
+							}, (err) => {
+								if (err) {
+									console.log('error')
+									return io.to(socket.id).emit('error', err);
+								}
+								console.log('hello!')
+								io.to(socket.id).emit('doneUploadVideo', { video: uploadsPath + Name, uniqIdForOneLoading, type: data.type });
+								Files = {};
+							});
+						} else {
+							io.to(socket.id).emit('doneUploadVideo', { video: uploadsPath + Name, uniqIdForOneLoading, type: data.type });
+							Files = {};
+						}
+
 					});
 				});
 			});

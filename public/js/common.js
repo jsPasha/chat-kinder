@@ -29,7 +29,7 @@ $(function () {
 	var socket = io();
 
 	socket.on('connect', function () {
-		if (activeRoom) socket.emit('joinRoom', {room: activeRoom});
+		if (activeRoom) socket.emit('joinRoom', { room: activeRoom });
 	});
 
 	socket.on('newMessage', function (data) {
@@ -39,11 +39,6 @@ $(function () {
 		}
 		$('#messages_body').append(html);
 		scrollToBottom();
-	});
-
-	$('#loadImageInput, #fileDoc').change(function (e) {
-		var timestamp = new Date().getTime();		
-		sendFile(timestamp, this.dataset.loadType, this);
 	});
 
 	$('body').on('click', '.room_item', function () {
@@ -57,7 +52,7 @@ $(function () {
 		var activeDay;
 		var id = this.dataset.id;
 
-		socket.emit('joinRoom', {room: id});
+		socket.emit('joinRoom', { room: id });
 
 		activeRoom = id;
 
@@ -86,10 +81,95 @@ $(function () {
 			id_sender: userId,
 			type: 'text'
 		});
-
 		this.reset();
-
 	});
+
+
+	// START FILE UPLOADING
+	if (window.File && window.FileReader) { //These are the relevant HTML5 objects that we are going to use 
+		$('#loadImageInput, #fileDoc, #FileBox').change(FileChosen);
+	}
+	else {
+		$('#loadImageInput, #fileDoc, #FileBox').change(FileChosen);
+		$('#loadImageInput, #fileDoc').change(function (e) {
+			var timestamp = new Date().getTime();
+			sendFile(timestamp, this.dataset.loadType, this);
+		});
+		// document.getElementById('UploadArea').innerHTML = "Your Browser Doesn't Support The File API Please Update Your Browser";
+	}
+
+	var SelectedFile = {};
+	var Name = {};
+	var FReader = {};
+
+	function FileChosen(evnt) {
+
+		var id = Math.round(evnt.timeStamp);
+		SelectedFile[id] = evnt.target.files[0];
+
+		Name[id] = SelectedFile[id].name;
+		StartUpload(id, evnt.target);
+
+	}
+
+	function StartUpload(id, target) {
+
+		var fileType = target.dataset.loadType;
+
+		generateTempMessage(id, fileType);
+
+		if (target.value != "") {
+
+			FReader[id] = new FileReader();
+
+			var fileSizeInMegabyte = Math.round(SelectedFile[id].size / 1048576);
+
+			FReader[id].onload = function (evnt) {
+				socket.emit('uploadFile', { uniqIdForOneLoading: id, 'Name': Name[id], Data: evnt.target.result, type: fileType });
+			}
+
+			socket.emit('startUploadFile', { uniqIdForOneLoading: id, 'Name': Name[id], 'Size': SelectedFile[id].size, type: fileType });
+
+			target.value = '';
+
+		}
+		else {
+			alert("Please Select A File");
+		}
+	}
+
+	socket.on('MoreData', function (data) {
+
+		var id = data.uniqIdForOneLoading;
+		UpdateBar(data['Percent'], id);
+		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
+		var NewFile; //The Variable that will hold the new Block of Data
+
+		NewFile = SelectedFile[id].slice(Place, Place + Math.min(524288, (SelectedFile[id].size - Place)));
+		FReader[id].readAsBinaryString(NewFile);
+	});
+
+	function UpdateBar(percent, id) {
+		$('.progress-' + id).css('width', percent + '%');
+		// $('#percent').html(Math.round(percent * 100) / 100 + '%');
+		// var MBDone = Math.round(((percent / 100.0) * SelectedFile.size) / 1048576);
+		// $('#MB').html(MBDone);
+	}
+
+	socket.on('doneUploadVideo', function (data) {
+		console.log(data)
+		var timestamp = data.uniqIdForOneLoading;
+		delete SelectedFile[timestamp];
+		socket.emit('createMessage', {
+			text: data.video,
+			room: activeRoom,
+			id_sender: userId,
+			timestamp: timestamp,
+			type: data.type
+		});
+	});
+	// END FILE UPLOADING
+
 
 	function sendFile(timestamp, type, input) {
 		var formData = new FormData();
@@ -111,11 +191,11 @@ $(function () {
 				'Content-Type': 'multipart/form-data'
 			},
 			onUploadProgress: function (progressEvent) {
-			
+
 				var loaded = progressEvent.loaded;
 				var total = progressEvent.total;
 				var persent = Math.round(loaded / total) * 100;
-				$('.progress-'+timestamp).css('width', persent + '%');
+				$('.progress-' + timestamp).css('width', persent + '%');
 
 			},
 		}).then(function (response) {
@@ -133,84 +213,24 @@ $(function () {
 		});
 	}
 
-
-
-	// START VIDEO UPLOADING
-	if (window.File && window.FileReader) { //These are the relevant HTML5 objects that we are going to use 
-		$('#FileBox').change(FileChosen);
-	}
-	else {
-		// document.getElementById('UploadArea').innerHTML = "Your Browser Doesn't Support The File API Please Update Your Browser";
-	}
-
-	var SelectedFile = {};
-	var Name = {};
-	var FReader = {};
-
-	function FileChosen(evnt) {
-		var uniqIdForOneLoading = Math.round(evnt.timeStamp);
-		SelectedFile[uniqIdForOneLoading] = evnt.target.files[0];
-		Name[uniqIdForOneLoading] = SelectedFile[uniqIdForOneLoading].name;
-		StartUpload(uniqIdForOneLoading);
-	}	
-
-	function StartUpload(uniqIdForOneLoading) {
-
-		generateTempMessage(uniqIdForOneLoading, 'video');
-
-		if (document.getElementById('FileBox').value != "") {
-
-			FReader[uniqIdForOneLoading] = new FileReader();
-
-			var fileSizeInMegabyte = Math.round(SelectedFile[uniqIdForOneLoading].size / 1048576);
-
-			FReader[uniqIdForOneLoading].onload = function (evnt) {
-				socket.emit('uploadVideo', { uniqIdForOneLoading: uniqIdForOneLoading, 'Name': Name[uniqIdForOneLoading], Data: evnt.target.result });
-			}
-
-			socket.emit('startUploadVideo', { uniqIdForOneLoading: uniqIdForOneLoading, 'Name': Name[uniqIdForOneLoading], 'Size': SelectedFile[uniqIdForOneLoading].size });
-
+	$('body').on('click', '.video_link', function (e) {
+		e.preventDefault();
+		var video = '<video controls autoplay><source src="' + $(this).attr('href') + '"></video>';
+		if (!document.getElementById('video_popup')) {
+			$('body').append('<div id="video_popup"><div class="v_bg"></div>' + video + '</div>');
+		} else {
+			$('#video_popup').find('video').replaceWith(video);
 		}
-		else {
-			alert("Please Select A File");
-		}
-	}
-	
-	socket.on('MoreData', function (data) {
-		
-		var uniqIdForOneLoading = data.uniqIdForOneLoading;
-		UpdateBar(data['Percent'], uniqIdForOneLoading);
-		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
-		var NewFile; //The Variable that will hold the new Block of Data
-		if (SelectedFile[uniqIdForOneLoading].webkitSlice)
-			NewFile = SelectedFile[uniqIdForOneLoading].webkitSlice(Place, Place + Math.min(524288, (SelectedFile[uniqIdForOneLoading].size - Place)));
-		else
-			NewFile = SelectedFile[uniqIdForOneLoading].slice(Place, Place + Math.min(524288, (SelectedFile[uniqIdForOneLoading].size - Place)));
-		FReader[uniqIdForOneLoading].readAsBinaryString(NewFile);
+
+		$('html, body').addClass('popup-on')
+		$('#video_popup').addClass('fixed');
+
 	});
 
-	function UpdateBar(percent, uniqIdForOneLoading) {
-		$('.progress-'+uniqIdForOneLoading).css('width', percent + '%');
-		// $('#percent').html(Math.round(percent * 100) / 100 + '%');
-		// var MBDone = Math.round(((percent / 100.0) * SelectedFile.size) / 1048576);
-		// $('#MB').html(MBDone);
-	}
-
-	socket.on('doneUploadVideo', function (data) {
-		var timestamp = data.uniqIdForOneLoading;
-		delete SelectedFile[timestamp];
-		$('#FileBox').val('');
-		socket.emit('createMessage', {
-			text: data.video,
-			room: activeRoom,
-			id_sender: userId,
-			timestamp: timestamp,
-			type: 'video'
-		});
-	});
-	// END VIDEO UPLOADING
-
-
+	$('body').on('click', '.v_bg', function () {
+		$('html, body').removeClass('popup-on');
+		$('#video_popup').removeClass('fixed');
+		$('#video_popup').find('video').get(0).pause()
+	})
 
 });
-
