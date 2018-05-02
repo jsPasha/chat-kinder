@@ -5,7 +5,7 @@ const uniqid = require('uniqid');
 const tempPath = '/uploads/temp/';
 const uploadsPath = '/uploads/'
 
-class videoUploader {
+class socketUploader {
 
 	constructor() {
 		this.Files = {};
@@ -60,7 +60,7 @@ class videoUploader {
 
 				var input = fs.createReadStream(publicPath + tempPath + Name);
 
-				var output = fs.createWriteStream(publicPath + videoPath + Name);
+				var output = fs.createWriteStream(publicPath + uploadsPath + Name);
 
 				input.pipe(output);
 
@@ -69,7 +69,7 @@ class videoUploader {
 						if (err) {
 							console.log('can`t unlink');
 						}
-						io.to(socket.id).emit('doneUploadVideo', { video: videoPath + Name, uniqIdForOneLoading });
+						io.to(socket.id).emit('doneUploadVideo', { video: uploadsPath + Name, uniqIdForOneLoading });
 						Files = {};
 					});
 				});
@@ -87,7 +87,6 @@ class videoUploader {
 			io.to(socket.id).emit('MoreData', { Place, Percent, uniqIdForOneLoading });
 		}
 	}
-
 }
 
-module.exports = { videoUploader };
+module.exports = { socketUploader };

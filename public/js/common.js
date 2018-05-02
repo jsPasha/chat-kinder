@@ -41,7 +41,7 @@ $(function () {
 		scrollToBottom();
 	});
 
-	$('#loadImageInput, #FileBox, #fileDoc').change(function (e) {
+	$('#loadImageInput, #fileDoc').change(function (e) {
 		var timestamp = new Date().getTime();		
 		sendFile(timestamp, this.dataset.loadType, this);
 	});
@@ -132,4 +132,85 @@ $(function () {
 			console.log(error)
 		});
 	}
+
+
+
+	// START VIDEO UPLOADING
+	if (window.File && window.FileReader) { //These are the relevant HTML5 objects that we are going to use 
+		$('#FileBox').change(FileChosen);
+	}
+	else {
+		// document.getElementById('UploadArea').innerHTML = "Your Browser Doesn't Support The File API Please Update Your Browser";
+	}
+
+	var SelectedFile = {};
+	var Name = {};
+	var FReader = {};
+
+	function FileChosen(evnt) {
+		var uniqIdForOneLoading = Math.round(evnt.timeStamp);
+		SelectedFile[uniqIdForOneLoading] = evnt.target.files[0];
+		Name[uniqIdForOneLoading] = SelectedFile[uniqIdForOneLoading].name;
+		StartUpload(uniqIdForOneLoading);
+	}	
+
+	function StartUpload(uniqIdForOneLoading) {
+
+		generateTempMessage(uniqIdForOneLoading, 'video');
+
+		if (document.getElementById('FileBox').value != "") {
+
+			FReader[uniqIdForOneLoading] = new FileReader();
+
+			var fileSizeInMegabyte = Math.round(SelectedFile[uniqIdForOneLoading].size / 1048576);
+
+			FReader[uniqIdForOneLoading].onload = function (evnt) {
+				socket.emit('uploadVideo', { uniqIdForOneLoading: uniqIdForOneLoading, 'Name': Name[uniqIdForOneLoading], Data: evnt.target.result });
+			}
+
+			socket.emit('startUploadVideo', { uniqIdForOneLoading: uniqIdForOneLoading, 'Name': Name[uniqIdForOneLoading], 'Size': SelectedFile[uniqIdForOneLoading].size });
+
+		}
+		else {
+			alert("Please Select A File");
+		}
+	}
+	
+	socket.on('MoreData', function (data) {
+		
+		var uniqIdForOneLoading = data.uniqIdForOneLoading;
+		UpdateBar(data['Percent'], uniqIdForOneLoading);
+		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
+		var NewFile; //The Variable that will hold the new Block of Data
+		if (SelectedFile[uniqIdForOneLoading].webkitSlice)
+			NewFile = SelectedFile[uniqIdForOneLoading].webkitSlice(Place, Place + Math.min(524288, (SelectedFile[uniqIdForOneLoading].size - Place)));
+		else
+			NewFile = SelectedFile[uniqIdForOneLoading].slice(Place, Place + Math.min(524288, (SelectedFile[uniqIdForOneLoading].size - Place)));
+		FReader[uniqIdForOneLoading].readAsBinaryString(NewFile);
+	});
+
+	function UpdateBar(percent, uniqIdForOneLoading) {
+		$('.progress-'+uniqIdForOneLoading).css('width', percent + '%');
+		// $('#percent').html(Math.round(percent * 100) / 100 + '%');
+		// var MBDone = Math.round(((percent / 100.0) * SelectedFile.size) / 1048576);
+		// $('#MB').html(MBDone);
+	}
+
+	socket.on('doneUploadVideo', function (data) {
+		var timestamp = data.uniqIdForOneLoading;
+		delete SelectedFile[timestamp];
+		$('#FileBox').val('');
+		socket.emit('createMessage', {
+			text: data.video,
+			room: activeRoom,
+			id_sender: userId,
+			timestamp: timestamp,
+			type: 'video'
+		});
+	});
+	// END VIDEO UPLOADING
+
+
+
 });
+
