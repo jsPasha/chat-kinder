@@ -3,10 +3,10 @@ const mysql = require('mysql');
 var pool = mysql.createPool({
 	connectionLimit: 100,
 	
-	// host: 'by.ua',
-	// user: 'u_kinderklH',
-	// password: 'yRZYREa9TbwG',
-	// database: 'kinderklinik_chat'
+	// host: '',
+	// user: '',
+	// password: '',
+	// database: ''
 
 	host: 'localhost',
 	user: 'root',
